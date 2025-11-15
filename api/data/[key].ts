@@ -1,0 +1,21 @@
+- import type { VercelRequest, VercelResponse } from '@vercel/node';
+- import { list, put } from '@vercel/blob';
+- export default async function handler(req: VercelRequest, res: VercelResponse) {
+- const key = String(req.query.key || '').trim();
+- if (!key) return res.status(400).json({ error: 'key required' });
+- const pathname = \ data/${key}.json`;`
+- if (req.method === 'GET') {
+- const blobs = await list({ prefix: 'data/' });
+- const item = blobs.blobs.find(b => b.pathname === pathname);
+- if (!item) return res.status(200).json(null);
+- const r = await fetch(item.url);
+- const json = await r.json().catch(() => null);
+- return res.status(200).json(json);
+- }
+- if (req.method === 'POST') {
+- const body = req.body ?? null;
+- await put(pathname, JSON.stringify(body), { access: 'public', contentType: 'application/json', addRandomSuffix: false, token: process.env.BLOB_READ_WRITE_TOKEN });
+- return res.status(200).json(body);
+- }
+- res.status(405).send('Method Not Allowed');
+- }
